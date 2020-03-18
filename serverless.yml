@@ -1,0 +1,70 @@
+service: books-api
+
+provider:
+  name: aws
+  runtime: nodejs12.x
+  stage: ${opt:stage, 'dev'}
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:DescribeTable
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
+      Resource: 'arn:aws:dynamodb:us-east-1:*:*'
+
+functions:
+  add:
+    handler: handlers/books/add.handler
+    events:
+      - http:
+          path: book/add
+          method: post
+          cors: true
+  update:
+    handler: handlers/books/update.handler
+    events:
+      - http:
+          path: book/{uuid}/update
+          method: post
+          cors: true
+  delete:
+    handler: handlers/books/delete.handler
+    events:
+      - http:
+          path: book/{uuid}/delete
+          method: post
+          cors: true
+  list:
+    handler: handlers/books/list.handler
+    events:
+      - http:
+          path: books
+          method: get
+          cors: true
+  details:
+    handler: handlers/books/details.handler
+    events:
+      - http:
+          path: book/{uuid}
+          method: get
+          cors: true
+
+resources:
+  Resources:
+    booksTable: 
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${opt:stage}-booksTable
+        AttributeDefinitions:
+          - AttributeName: uuid
+            AttributeType: S
+        KeySchema:
+          - AttributeName: uuid
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
